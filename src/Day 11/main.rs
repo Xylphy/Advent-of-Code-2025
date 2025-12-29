@@ -1,51 +1,36 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
 };
 
-enum State {
-    Enter,
-    Exit,
-}
+fn dp1(
+    node: &str,
+    graph: &HashMap<String, Vec<String>>,
+    memo: &mut HashMap<String, usize>,
+) -> usize {
+    if node == "out" {
+        return 1;
+    }
 
-fn part_1(graph: &HashMap<String, Vec<String>>) -> usize {
-    let mut paths: usize = 0;
-    let mut visited: HashSet<&str> = HashSet::new();
-    let mut stack: Vec<(&str, State)> = vec![("you", State::Enter)];
+    if let Some(&ans) = memo.get(node) {
+        return ans;
+    }
 
-    while let Some((node, state)) = stack.pop() {
-        match state {
-            State::Enter => {
-                if node == "out" {
-                    paths += 1;
-                    continue;
-                }
+    let mut total = 0usize;
 
-                if visited.contains(node) {
-                    continue;
-                }
-
-                visited.insert(node);
-
-                stack.push((node, State::Exit));
-
-                if let Some(neighbors) = graph.get(node) {
-                    for neighbor in neighbors.iter().rev() {
-                        let n: &str = neighbor.as_str();
-                        if !visited.contains(n) {
-                            stack.push((n, State::Enter));
-                        }
-                    }
-                }
-            }
-            State::Exit => {
-                visited.remove(node);
-            }
+    if let Some(neighbors) = graph.get(node) {
+        for n in neighbors {
+            total = total.saturating_add(dp1(n, graph, memo));
         }
     }
 
-    paths
+    memo.insert(node.to_string(), total);
+    total
+}
+
+fn part_1(graph: &HashMap<String, Vec<String>>) -> usize {
+    dp1("you", graph, &mut HashMap::new())
 }
 
 fn flag(node: &str) -> u8 {
